@@ -1,4 +1,5 @@
 *.iml
+.ssh
 .gradle
 .idea/
 /.idea/caches
