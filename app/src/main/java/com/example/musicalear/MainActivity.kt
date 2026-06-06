@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,11 +14,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -122,12 +129,55 @@ fun ListenScreen(
     modifier: Modifier,
     onBack: () -> Unit
 ){
+    var octave by remember { mutableIntStateOf(4) }
+    var expanded by remember { mutableStateOf(false) }
+    val notesToShow = when (AudioConfig.semiToneDisplay) {
+        true -> Note.entries
+        false -> listOf(
+            Note.DO, Note.RE, Note.MI,
+            Note.FA, Note.SOL, Note.LA, Note.SI
+        )
+    }
+    val columns = if (AudioConfig.semiToneDisplay) 4 else 3
     Column(modifier = modifier)
     {
         BackButton(onBack)
 
         Text("Mode écoute de note",
             modifier = modifier)
+
+        Box {
+            Button(onClick = {expanded = true}){
+                Text("Octave : $octave")
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = {expanded = false}
+            ) {
+                (0..7).forEach {
+                    value ->
+                    DropdownMenuItem(
+                        text = { Text("Octave $value") },
+                        onClick = {
+                            octave = value
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns)
+        ) {
+            items(notesToShow) { note ->
+                Button(onClick = {
+                    playTone(note.octave(octave).frequency())
+                }) {
+                    Text("${note.displayName} $octave")
+                }
+            }
+        }
     }
 }
 
@@ -150,7 +200,8 @@ fun RecognitionScreen(
 fun BackButton(
     onBack: () -> Unit
 ){
-    Button(onClick = onBack) {
+    Button(onClick = onBack)
+    {
         Text("Retour")
     }
 }
